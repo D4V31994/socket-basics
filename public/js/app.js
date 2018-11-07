@@ -15,7 +15,11 @@ var $form = jQuery('#message-form'); //when selecting id, put # in front of it
 $form.on('submit', function(event) {
 	event.preventDefault();
 
+	var $message = $form.find('input[name=message]'); //replaces content of input
+
 	socket.emit('message', {
-		text: $form.find('input[name=message]')
+		text: $message.val()
 	});
+
+	$message.val(''); //what comes up after the input, empty string makes it blank.
 });
