@@ -12,6 +12,20 @@ var clientInfo = {}; //way to mention user and room name and only emits msg to r
 io.on('connection', function(socket) {
 	console.log('User connected via socket.io!');
 
+	socket.on('disconnect', function() {
+		var userData = clientInfo[socket.id];
+
+		if (typeof userData !== 'undefined') { // any code inside will run if there is client info 
+			socket.leave(userData.room);
+			io.to(userData.room).emit('message', {
+				name: 'System',
+				text: userData.name + ' has left!',
+				timestamp: moment().valueOf()
+			});
+			delete clientInfo[socket.id]; //lets you delete info when user leaves
+		}
+	});
+
 	socket.on('joinRoom', function(req) {
 		clientInfo[socket.id] = req; //figures out their name id and req for room
 		socket.join(req.room);
