@@ -9,6 +9,30 @@ app.use(express.static(__dirname + '/public'));
 
 var clientInfo = {}; //way to mention user and room name and only emits msg to room user joined
 
+// Sends current users to provided socket
+function sendCurrentUsers(socket) {
+	var info = clientInfo[socket.id];
+	var users = [];
+
+	if (typeof info === 'undefined') {
+		return;
+	}
+
+	Object.keys(clientInfo).forEach(function(socketId) { //returns array from object w attributes
+		var userInfo = clientInfo[socketId];
+
+		if(info.room === userInfo.room) {
+			users.push(userInfo.name);
+		}
+	});
+
+	socket.emit('message', {
+		name: 'System',
+		text: 'Current users: ' + users.join(', '),
+		timestamp: moment().valueOf()
+	});
+}
+
 io.on('connection', function(socket) {
 	console.log('User connected via socket.io!');
 
@@ -39,8 +63,12 @@ io.on('connection', function(socket) {
 	socket.on('message', function(message) {
 		console.log('Message recieved: ' + message.text);
 
-		message.timestamp = moment().valueOf();
-		io.to(clientInfo[socket.id].room).emit('message', message); // helps emit msg to users only in room
+		if (message.text === '@currentUsers') {
+			sendCurrentUsers(socket);
+		} else {
+			message.timestamp = moment().valueOf();
+			io.to(clientInfo[socket.id].room).emit('message', message); // helps emit msg to users only in room
+		}
 	});
 
 	// timestamp property = Javascript timestamp (miliseconds)
